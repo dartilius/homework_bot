@@ -1,6 +1,5 @@
 import telegram
 import requests
-from datetime import datetime
 import time
 import os
 import logging
@@ -79,7 +78,7 @@ def get_api_answer(timestamp):
         else:
             return requsest.json()
 
-    except Exeption as error:
+    except Exception:
         logging.error(f'Ошибка запроса {error}')
 
 
@@ -91,21 +90,25 @@ def check_response(response):
             raise TypeError('Полученые данные не являются списком')
         else:
             return response['homeworks']
-    except:
-        raise 'Нет поля homeworks'
+    except Exception:
+        raise 'В ответе нет ключа homeworks'
 
 
 def parse_status(homework):
     """Проверка статуса домашней работы."""
     try:
         verdict = HOMEWORK_VERDICTS[homework['status']]
-        homework_name = homework['homework_name']
-        return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
-    except Exeption:
-        logging.debug(
-            f'Статус работы отсутсвует'
-        )
+    except Exception as error:
+        logging.debug(error)
+
+    try:
+        homework_name = homework['homework_name']
+
+    except Exception as error:
+        logging.debug(error)
+
+    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def main():
