@@ -79,7 +79,7 @@ def get_api_answer(timestamp):
             return requsest.json()
 
     except Exception:
-        raise f'Ошибка запроса'
+        raise 'Ошибка запроса'
 
 
 def check_response(response):
