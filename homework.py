@@ -94,7 +94,10 @@ def parse_status(homework):
             logging.debug('Отсутвует статус работы.')
             raise KeyError('Отсутвует ключ "verdict".')
         else:
-            return f'Изменился статус проверки работы "{homework_name}". {verdict}'
+            return (
+                f'Изменился статус проверки работы '
+                f'"{homework_name}". {verdict}'
+            )
 
     except Exception as error:
         raise KeyError(error)
