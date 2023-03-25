@@ -42,7 +42,6 @@ def check_tokens():
 
 def send_message(bot, message):
     """Отправка сообщения."""
-
     try:
         logging.debug(
             f'Попытка отправить сообщение: {message}'
@@ -60,7 +59,7 @@ def get_api_answer(timestamp):
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
         if response.status_code != 200:
             logging.error(
-                f'Ошибка сервера {request.status_code}.'
+                f'Ошибка сервера {response.status_code}.'
             )
             raise requests.RequestException('Неверный статус ответа.')
         else:
