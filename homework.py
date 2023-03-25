@@ -2,6 +2,7 @@ import telegram
 import requests
 import time
 import os
+import sys
 import logging
 from dotenv import load_dotenv
 
@@ -30,37 +31,24 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens():
     """Проверка токенов."""
-    if PRACTICUM_TOKEN is None:
-        logging.critical(
-            'Отсутствует обязательная переменная окружения: '
-            'PRACTICUM_TOKEN - программа принудительно остановлена.'
-        )
-        exit()
-
-    if TELEGRAM_TOKEN is None:
-        logging.critical(
-            'Отсутствует обязательная переменная окружения: '
-            'TELEGRAM_TOKEN - программа принудительно остановлена.'
-        )
-        exit()
-
-    if TELEGRAM_CHAT_ID is None:
-        logging.critical(
-            'Отсутствует обязательная переменная окружения: '
-            'TELEGRAM_CHAT_ID - программа принудительно остановлена.'
-        )
-        exit()
+    for token in (TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, PRACTICUM_TOKEN):
+        if token is None:
+            logging.critical(
+                'Отсутствуют обязательные переменные окружения: '
+                ' программа принудительно остановлена.'
+            )
+            sys.exit()
 
 
 def send_message(bot, message):
     """Отправка сообщения."""
-    try:
-        bot.send_message(TELEGRAM_CHAT_ID, message)
-        logging.debug(
-            f'Бот отправил сообщение: '
-            f'{message}'
-        )
 
+    try:
+        logging.debug(
+            f'Попытка отправить сообщение: {message}'
+        )
+        bot.send_message(TELEGRAM_CHAT_ID, message)
+        logging.debug('Бот отправил сообщение')
     except Exception as error:
         logging.error(f'{error}')
 
@@ -69,17 +57,17 @@ def get_api_answer(timestamp):
     """Функция опроса API яндекс практикум."""
     payload = {'from_date': timestamp}
     try:
-        requsest = requests.get(ENDPOINT, headers=HEADERS, params=payload)
-        if requsest.status_code != 200:
+        response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
+        if response.status_code != 200:
             logging.error(
-                f'ошибка сервера {requsest.status_code}'
+                f'Ошибка сервера {request.status_code}.'
             )
-            raise f'Ошибка сервера {requsest.status_code}'
+            raise requests.RequestException('Неверный статус ответа.')
         else:
-            return requsest.json()
+            return response.json()
 
-    except Exception:
-        raise 'Ошибка запроса'
+    except Exception as error:
+        raise Exception(error)
 
 
 def check_response(response):
@@ -91,24 +79,25 @@ def check_response(response):
         else:
             return response['homeworks']
     except Exception:
-        raise 'В ответе нет ключа homeworks'
+        raise TypeError('В ответе нет ключа homeworks')
 
 
 def parse_status(homework):
     """Проверка статуса домашней работы."""
     try:
         verdict = HOMEWORK_VERDICTS[homework['status']]
-
-    except Exception as error:
-        logging.debug(error)
-
-    try:
         homework_name = homework['homework_name']
+        if homework_name is None:
+            logging.debug('Отсутвует название работы.')
+            raise KeyError('Отсутвует ключ "homework_name".')
+        elif verdict is None:
+            logging.debug('Отсутвует статус работы.')
+            raise KeyError('Отсутвует ключ "verdict".')
+        else:
+            return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
     except Exception as error:
-        logging.debug(error)
-
-    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
+        raise KeyError(error)
 
 
 def main():
@@ -127,7 +116,8 @@ def main():
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            print(message)
+            logging.error(message)
+            send_message(bot, message)
 
         time.sleep(RETRY_PERIOD)
 
