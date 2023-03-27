@@ -1,9 +1,9 @@
-import telegram
-import requests
-import time
-import os
-import sys
 import logging
+import os
+import requests
+import sys
+import telegram
+import time
 from dotenv import load_dotenv
 
 logging.basicConfig(
@@ -49,7 +49,7 @@ def send_message(bot, message):
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logging.debug('Бот отправил сообщение')
     except Exception as error:
-        logging.error(f'{error}')
+        logging.error(error)
 
 
 def get_api_answer(timestamp):
@@ -61,12 +61,12 @@ def get_api_answer(timestamp):
             logging.error(
                 f'Ошибка сервера {response.status_code}.'
             )
-            raise requests.RequestException('Неверный статус ответа.')
+            raise ValueError('Неверный статус ответа.')
         else:
             return response.json()
 
-    except Exception as error:
-        raise Exception(error)
+    except requests.RequestException as error:
+        logging.debug(error)
 
 
 def check_response(response):
@@ -77,29 +77,28 @@ def check_response(response):
             raise TypeError('Полученые данные не являются списком')
         else:
             return response['homeworks']
-    except Exception:
-        raise TypeError('В ответе нет ключа homeworks')
+    except Exception as error:
+        raise TypeError(error)
 
 
 def parse_status(homework):
     """Проверка статуса домашней работы."""
-    try:
-        verdict = HOMEWORK_VERDICTS[homework['status']]
-        homework_name = homework['homework_name']
-        if homework_name is None:
-            logging.debug('Отсутвует название работы.')
-            raise KeyError('Отсутвует ключ "homework_name".')
-        elif verdict is None:
-            logging.debug('Отсутвует статус работы.')
-            raise KeyError('Отсутвует ключ "verdict".')
+    if 'status' in homework:
+        status = homework['status']
+        if status in HOMEWORK_VERDICTS:
+            verdict = HOMEWORK_VERDICTS[status]
         else:
-            return (
-                f'Изменился статус проверки работы '
-                f'"{homework_name}". {verdict}'
-            )
-
-    except Exception as error:
-        raise KeyError(error)
+            raise KeyError('Статус работы недокументирован.')
+    else:
+        raise KeyError('В домашней работе отсутвует статус.')
+    if 'homework_name' in homework:
+        homework_name = homework['homework_name']
+    else:
+        raise KeyError('В домашней работе отсутвует название.')
+    return (
+            f'Изменился статус проверки работы '
+            f'"{homework_name}". {verdict}'
+        )
 
 
 def main():
