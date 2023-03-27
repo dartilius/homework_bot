@@ -96,9 +96,9 @@ def parse_status(homework):
     else:
         raise KeyError('В домашней работе отсутвует название.')
     return (
-            f'Изменился статус проверки работы '
-            f'"{homework_name}". {verdict}'
-        )
+        f'Изменился статус проверки работы '
+        f'"{homework_name}". {verdict}'
+    )
 
 
 def main():
