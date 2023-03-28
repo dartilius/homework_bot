@@ -71,30 +71,25 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Проверка запроса."""
-    try:
-        homeworks = response['homeworks']
-        if not isinstance(homeworks, list):
-            raise TypeError('Полученые данные не являются списком')
-        else:
-            return response['homeworks']
-    except Exception as error:
-        raise TypeError(error)
+    if 'homeworks' not in response:
+        raise TypeError('В запросе нет домашних работ.')
+    homeworks = response['homeworks']
+    if not isinstance(homeworks, list):
+        raise TypeError('Полученные данные не являются списком.')
+    return response['homeworks']
 
 
 def parse_status(homework):
     """Проверка статуса домашней работы."""
-    if 'status' in homework:
-        status = homework['status']
-        if status in HOMEWORK_VERDICTS:
-            verdict = HOMEWORK_VERDICTS[status]
-        else:
-            raise KeyError('Статус работы недокументирован.')
-    else:
+    if 'status' not in homework:
         raise KeyError('В домашней работе отсутвует статус.')
-    if 'homework_name' in homework:
-        homework_name = homework['homework_name']
-    else:
+    status = homework['status']
+    if status not in HOMEWORK_VERDICTS:
+        raise KeyError('Статус работы недокументирован.')
+    verdict = HOMEWORK_VERDICTS[status]
+    if 'homework_name' not in homework:
         raise KeyError('В домашней работе отсутвует название.')
+    homework_name = homework['homework_name']
     return (
         f'Изменился статус проверки работы '
         f'"{homework_name}". {verdict}'
